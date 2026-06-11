@@ -42,7 +42,7 @@ ${csvContent.slice(0, 3000)}
       },
       body: JSON.stringify({
         model: 'claude-opus-4-6',
-        max_tokens: 800,
+        max_tokens: 1500,
         messages: [{ role: 'user', content: prompt }]
       })
     });
