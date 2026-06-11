@@ -231,10 +231,14 @@
         body: JSON.stringify({ csvContent })
       });
       const result = await res.json();
-      clearInterval(msgInterval);
-      clearInterval(progInterval);
-      document.getElementById('progress-bar').style.width = '100%';
-      setTimeout(() => renderResult(result), 400);
+clearInterval(msgInterval);
+clearInterval(progInterval);
+document.getElementById('progress-bar').style.width = '100%';
+if (result.error) {
+  document.getElementById('loading-msg').textContent = '오류: ' + result.error;
+  return;
+}
+setTimeout(() => renderResult(result), 400);
     } catch(e) {
       clearInterval(msgInterval);
       clearInterval(progInterval);
