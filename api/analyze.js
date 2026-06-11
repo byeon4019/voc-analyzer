@@ -1,3 +1,11 @@
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb',
+    },
+  },
+};
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -6,7 +14,14 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { csvContent } = req.body;
+  let csvContent;
+  try {
+    const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    csvContent = body?.csvContent;
+  } catch(e) {
+    return res.status(400).json({ error: 'Body parse error: ' + e.message });
+  }
+
   if (!csvContent) return res.status(400).json({ error: 'CSV content required' });
 
   const prompt = `당신은 커머스 서비스의 VOC 분석 전문가입니다. 아래 VOC 데이터를 분석해서 반드시 JSON만 반환하세요. 절대로 다른 텍스트, 설명, 마크다운 코드블록 없이 순수 JSON 객체만 반환하세요. 첫 글자는 반드시 { 이어야 합니다.
@@ -37,7 +52,6 @@ ${csvContent.slice(0, 8000)}
 
     const text = data.content.map(i => i.text || '').join('');
     const clean = text.replace(/```json|```/g, '').trim();
-
     const jsonMatch = clean.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return res.status(500).json({ error: 'JSON 파싱 실패: ' + clean.slice(0, 200) });
 
