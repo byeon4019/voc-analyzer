@@ -2,18 +2,426 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI VOC 인사이트 분석기</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>ReviewMind</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8f9fc; color: #1a1a2e; min-height: 100vh; }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
-    .header { background: #fff; border-bottom: 1px solid #e8eaf0; padding: 16px 24px; display: flex; align-items: center; gap: 10px; }
-    .header-logo { width: 32px; height: 32px; background: #185FA5; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px; }
-    .header h1 { font-size: 16px; font-weight: 600; color: #1a1a2e; }
-    .header span { font-size: 13px; color: #888; margin-left: 4px; }
+    :root {
+      --navy: #1a2740;
+      --blue: #2563eb;
+      --blue-light: #eff6ff;
+      --accent: #3b82f6;
+      --green: #10b981;
+      --red: #ef4444;
+      --gray-50: #f8fafc;
+      --gray-100: #f1f5f9;
+      --gray-400: #94a3b8;
+      --gray-600: #475569;
+      --gray-800: #1e293b;
+      --white: #ffffff;
+    }
 
-    .container { max-width: 900px; margin: 0 auto; padding: 32px 24px; }
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'Pretendard', 'Apple SD Gothic Neo', 'Segoe UI', sans-serif;
+      background: var(--white);
+      color: var(--gray-800);
+      overflow: hidden;
+    }
+
+    /* ── ONBOARDING ── */
+    #onboarding {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+    }
+
+    .slides {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 32px 20px;
+      opacity: 0;
+      transform: translateX(60px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+      pointer-events: none;
+    }
+
+    .slide.active {
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: all;
+    }
+
+    .slide.exit {
+      opacity: 0;
+      transform: translateX(-60px);
+    }
+
+    /* slide 1 */
+    .slide-1 { background: var(--white); color: var(--gray-800); }
+
+    .slide-1 .logo-mark {
+      width: 72px; height: 72px;
+      background: var(--blue-light);
+      border-radius: 20px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 32px;
+      margin-bottom: 28px;
+      box-shadow: 0 4px 16px rgba(37,99,235,0.12);
+    }
+
+    .slide-1 h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+      text-align: center;
+      color: var(--navy);
+    }
+
+    .slide-1 .tagline {
+      font-size: 15px;
+      color: var(--gray-600);
+      text-align: center;
+      margin-bottom: 40px;
+      line-height: 1.6;
+    }
+
+    .stat-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 40px;
+      width: 100%;
+      max-width: 320px;
+    }
+
+    .stat-card {
+      flex: 1;
+      background: var(--gray-50);
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 16px 10px;
+      text-align: center;
+    }
+
+    .stat-card .num {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--blue);
+      display: block;
+      white-space: nowrap;
+    }
+
+    .stat-card .label {
+      font-size: 10px;
+      color: var(--gray-400);
+      margin-top: 4px;
+      line-height: 1.3;
+    }
+
+    /* slide 2 */
+    .slide-2 { background: var(--gray-50); }
+
+    .step-list {
+      width: 100%;
+      max-width: 340px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin: 32px 0;
+    }
+
+    .step-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      background: var(--white);
+      border-radius: 16px;
+      padding: 18px 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+
+    .step-num {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--blue);
+      color: var(--white);
+      font-size: 14px;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .step-text strong {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--gray-800);
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    .step-text span {
+      font-size: 13px;
+      color: var(--gray-600);
+      line-height: 1.4;
+    }
+
+    /* slide 3 */
+    .slide-3 { background: var(--white); }
+
+    .result-preview {
+      width: 100%;
+      max-width: 340px;
+      background: var(--white);
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      margin: 24px 0;
+    }
+
+    .preview-header {
+      background: var(--navy);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .preview-header span {
+      font-size: 12px;
+      color: rgba(255,255,255,0.7);
+      font-weight: 500;
+    }
+
+    .preview-stats {
+      display: flex;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .preview-stat {
+      flex: 1;
+      padding: 14px 8px;
+      text-align: center;
+      border-right: 1px solid #f1f5f9;
+    }
+
+    .preview-stat:last-child { border-right: none; }
+
+    .preview-stat .pnum {
+      font-size: 20px;
+      font-weight: 700;
+      display: block;
+    }
+
+    .preview-stat .plabel {
+      font-size: 10px;
+      color: var(--gray-400);
+      margin-top: 2px;
+    }
+
+    .ob-red { color: var(--red); }
+    .ob-green { color: var(--green); }
+    .ob-navy { color: var(--navy); }
+
+    .preview-body { padding: 14px 16px; }
+
+    .preview-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .preview-row:last-child { margin-bottom: 0; }
+
+    .preview-topic {
+      font-size: 12px;
+      color: var(--gray-800);
+      font-weight: 500;
+    }
+
+    .preview-bar-wrap {
+      flex: 1;
+      height: 4px;
+      background: #f1f5f9;
+      border-radius: 2px;
+      margin: 0 10px;
+    }
+
+    .preview-bar {
+      height: 100%;
+      border-radius: 2px;
+      background: var(--blue);
+    }
+
+    .preview-pct {
+      font-size: 11px;
+      color: var(--gray-400);
+      min-width: 28px;
+      text-align: right;
+    }
+
+    /* slide 4 */
+    .slide-4 { background: var(--blue-light); }
+
+    .notice-box {
+      width: 100%;
+      max-width: 320px;
+      background: var(--white);
+      border-radius: 16px;
+      padding: 20px;
+      margin: 20px 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .notice-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .notice-row:last-child { margin-bottom: 0; }
+
+    .notice-icon {
+      font-size: 16px;
+      margin-top: 1px;
+    }
+
+    .notice-text strong {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gray-800);
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .notice-text span {
+      font-size: 12px;
+      color: var(--gray-600);
+      line-height: 1.4;
+    }
+
+    .sample-dl-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      max-width: 320px;
+      padding: 14px;
+      background: var(--white);
+      border: 1.5px dashed var(--blue);
+      border-radius: 12px;
+      color: var(--blue);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      margin-bottom: 12px;
+    }
+
+    /* ── ONBOARDING BOTTOM NAV ── */
+    .onboarding-nav {
+      padding: 16px 24px 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      background: var(--white);
+    }
+
+    .dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #cbd5e1;
+      transition: all 0.2s;
+    }
+
+    .dot.active {
+      width: 20px;
+      border-radius: 3px;
+      background: var(--blue);
+    }
+
+    .btn-next {
+      width: 100%;
+      max-width: 320px;
+      padding: 16px;
+      background: var(--blue);
+      color: var(--white);
+      border: none;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-next:active { background: #1d4ed8; }
+
+    .btn-skip {
+      background: none;
+      border: none;
+      color: var(--gray-400);
+      font-size: 13px;
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    .slide-heading {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--navy);
+      text-align: center;
+      line-height: 1.4;
+      margin-bottom: 4px;
+    }
+
+    .slide-sub {
+      font-size: 14px;
+      color: var(--gray-600);
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    /* ── MAIN APP ── */
+    #main-app {
+      display: none;
+      min-height: 100vh;
+      background: #f8f9fc;
+      color: #1a1a2e;
+    }
+
+    #main-app.visible { display: block; }
+
+    .app-header { background: #fff; border-bottom: 1px solid #e8eaf0; padding: 16px 24px; display: flex; align-items: center; gap: 10px; }
+    .app-header-logo { width: 32px; height: 32px; background: #185FA5; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px; }
+    .app-header h1 { font-size: 16px; font-weight: 600; color: #1a1a2e; }
+    .app-header span { font-size: 13px; color: #888; margin-left: 4px; }
+
+    .app-container { max-width: 900px; margin: 0 auto; padding: 32px 24px; }
 
     .upload-card { background: #fff; border-radius: 16px; border: 1px solid #e8eaf0; padding: 40px; text-align: center; margin-bottom: 20px; }
     .upload-zone { border: 2px dashed #c8d0e0; border-radius: 12px; padding: 40px 24px; cursor: pointer; transition: all 0.2s; margin-bottom: 20px; }
@@ -87,81 +495,278 @@
 </head>
 <body>
 
-<div class="header">
-  <div class="header-logo">📊</div>
-  <h1>AI VOC 인사이트 분석기</h1>
-  <span>by Claude API</span>
+<!-- ── ONBOARDING ── -->
+<div id="onboarding" data-slide="1">
+
+  <div class="slides">
+
+    <!-- slide 1: 브랜드 인트로 -->
+    <div class="slide slide-1 active" data-index="1">
+      <div class="logo-mark">📊</div>
+      <h1>ReviewMind</h1>
+      <p class="tagline">CSV 파일 하나로<br>고객 리뷰의 패턴을 찾아드려요</p>
+      <div class="stat-row">
+        <div class="stat-card">
+          <span class="num">150건</span>
+          <span class="label">올리브영 앱<br>리뷰 수집</span>
+        </div>
+        <div class="stat-card">
+          <span class="num">~4,000자</span>
+          <span class="label">AI가 분석하는<br>텍스트 분량</span>
+        </div>
+        <div class="stat-card">
+          <span class="num">PoC</span>
+          <span class="label">실제 데이터로<br>검증된 MVP</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- slide 2: 사용법 -->
+    <div class="slide slide-2" data-index="2">
+      <p class="slide-heading">이렇게 사용하면 돼요</p>
+      <p class="slide-sub">CSV 파일만 있으면 준비 완료</p>
+      <div class="step-list">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-text">
+            <strong>CSV 파일 업로드</strong>
+            <span>고객 리뷰가 담긴 CSV 파일을 드래그하거나 클릭해서 올려주세요</span>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-text">
+            <strong>AI 분석 시작</strong>
+            <span>Claude API가 리뷰를 읽고 토픽별로 자동 분류합니다</span>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-text">
+            <strong>인사이트 확인</strong>
+            <span>불만 TOP5 · 긴급 이슈 · 기능 개선 제안을 확인하세요</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- slide 3: 결과 미리보기 -->
+    <div class="slide slide-3" data-index="3">
+      <p class="slide-heading">이런 결과가 나와요</p>
+      <div class="result-preview">
+        <div class="preview-header">
+          <span>📊 분석 결과 미리보기</span>
+        </div>
+        <div class="preview-stats">
+          <div class="preview-stat">
+            <span class="pnum ob-navy">30</span>
+            <div class="plabel">전체 VOC 수</div>
+          </div>
+          <div class="preview-stat">
+            <span class="pnum ob-red">47%</span>
+            <div class="plabel">부정 비율</div>
+          </div>
+          <div class="preview-stat">
+            <span class="pnum ob-green">40%</span>
+            <div class="plabel">긍정 비율</div>
+          </div>
+        </div>
+        <div class="preview-body">
+          <div class="preview-row">
+            <span class="preview-topic">결제 오류 및 앱 팅김</span>
+            <div class="preview-bar-wrap"><div class="preview-bar" style="width:70%"></div></div>
+            <span class="preview-pct">20%</span>
+          </div>
+          <div class="preview-row">
+            <span class="preview-topic">고객센터 응대 지연</span>
+            <div class="preview-bar-wrap"><div class="preview-bar" style="width:60%"></div></div>
+            <span class="preview-pct">17%</span>
+          </div>
+          <div class="preview-row">
+            <span class="preview-topic">쿠폰/할인 정책 불만</span>
+            <div class="preview-bar-wrap"><div class="preview-bar" style="width:45%"></div></div>
+            <span class="preview-pct">13%</span>
+          </div>
+          <div class="preview-row">
+            <span class="preview-topic">앱 성능 문제</span>
+            <div class="preview-bar-wrap"><div class="preview-bar" style="width:45%"></div></div>
+            <span class="preview-pct">13%</span>
+          </div>
+        </div>
+      </div>
+      <p style="font-size:12px; color: #94a3b8; text-align:center;">올리브영 앱 실제 리뷰 분석 결과 예시</p>
+    </div>
+
+    <!-- slide 4: 안내 + 샘플 -->
+    <div class="slide slide-4" data-index="4">
+      <p class="slide-heading">시작하기 전에</p>
+      <div class="notice-box">
+        <div class="notice-row">
+          <span class="notice-icon">📋</span>
+          <div class="notice-text">
+            <strong>CSV 파일이 필요해요</strong>
+            <span>content 컬럼에 리뷰 텍스트가 담긴 CSV 형식이어야 해요</span>
+          </div>
+        </div>
+        <div class="notice-row">
+          <span class="notice-icon">⚡</span>
+          <div class="notice-text">
+            <strong>약 4,000자 분량을 분석해요</strong>
+            <span>현재 버전은 PoC로, 리뷰 텍스트 기준 약 4,000자를 분석합니다. 대용량 처리를 위한 청크 분할 구조는 별도로 설계되어 있어요</span>
+          </div>
+        </div>
+        <div class="notice-row">
+          <span class="notice-icon">⏱️</span>
+          <div class="notice-text">
+            <strong>분석에 20~40초 걸려요</strong>
+            <span>Claude API가 리뷰를 처리하는 동안 잠깐 기다려주세요</span>
+          </div>
+        </div>
+      </div>
+      <a class="sample-dl-btn" href="https://raw.githubusercontent.com/byeon4019/voc-analyzer/main/portfolio_reviews.csv" download="portfolio_reviews.csv">
+        📥 샘플 CSV 다운로드
+      </a>
+    </div>
+
+  </div>
+
+  <!-- 하단 네비게이션 -->
+  <div class="onboarding-nav">
+    <div class="dots">
+      <div class="dot active" data-i="1"></div>
+      <div class="dot" data-i="2"></div>
+      <div class="dot" data-i="3"></div>
+      <div class="dot" data-i="4"></div>
+    </div>
+    <button class="btn-next" id="btnNext">다음</button>
+    <button class="btn-skip" id="btnSkip">건너뛰기</button>
+  </div>
+
 </div>
 
-<div class="container">
+<!-- ── MAIN APP ── -->
+<div id="main-app">
 
-  <div class="upload-card" id="upload-section">
-    <div class="upload-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
-      <div class="upload-icon">📂</div>
-      <h2>VOC CSV 파일을 드래그하거나 클릭해서 업로드</h2>
-      <p>고객 리뷰 · 고객센터 문의 · 앱스토어 리뷰 · VOC 데이터</p>
-    </div>
-    <input type="file" id="file-input" accept=".csv" style="display:none">
-
-    <div id="file-badge" style="display:none" class="file-badge">
-      ✓ <span id="file-name-text"></span>
-    </div>
-
-    <div style="margin-bottom: 16px;">
-      <button class="sample-btn" onclick="loadSample()">📋 샘플 데이터로 체험하기</button>
-    </div>
-
-    <button class="analyze-btn" id="analyze-btn" disabled onclick="runAnalysis()">
-      ✨ AI 분석 시작
-    </button>
+  <div class="app-header">
+    <div class="app-header-logo">📊</div>
+    <h1>AI VOC 인사이트 분석기</h1>
+    <span>by Claude API</span>
   </div>
 
-  <div class="loading-card" id="loading-section">
-    <div class="loading-spinner"></div>
-    <h2 id="loading-msg">Claude가 VOC를 분석하고 있어요...</h2>
-    <p id="loading-sub">주요 불만 · 긍정 의견 · 긴급 이슈를 추출하는 중</p>
-    <div class="progress-track"><div class="progress-fill" id="progress-bar"></div></div>
+  <div class="app-container">
+
+    <div class="upload-card" id="upload-section">
+      <div class="upload-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+        <div class="upload-icon">📂</div>
+        <h2>VOC CSV 파일을 드래그하거나 클릭해서 업로드</h2>
+        <p>고객 리뷰 · 고객센터 문의 · 앱스토어 리뷰 · VOC 데이터</p>
+      </div>
+      <input type="file" id="file-input" accept=".csv" style="display:none">
+
+      <div id="file-badge" style="display:none" class="file-badge">
+        ✓ <span id="file-name-text"></span>
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <button class="sample-btn" onclick="loadSample()">📋 샘플 데이터로 체험하기</button>
+      </div>
+
+      <button class="analyze-btn" id="analyze-btn" disabled onclick="runAnalysis()">
+        ✨ AI 분석 시작
+      </button>
+    </div>
+
+    <div class="loading-card" id="loading-section">
+      <div class="loading-spinner"></div>
+      <h2 id="loading-msg">Claude가 VOC를 분석하고 있어요...</h2>
+      <p id="loading-sub">주요 불만 · 긍정 의견 · 긴급 이슈를 추출하는 중</p>
+      <div class="progress-track"><div class="progress-fill" id="progress-bar"></div></div>
+    </div>
+
+    <div class="result-section" id="result-section">
+      <div class="result-header">
+        <h2>📊 분석 결과</h2>
+        <button class="reset-btn" onclick="resetAll()">↺ 다시 분석</button>
+      </div>
+
+      <div class="metric-grid" id="metrics"></div>
+
+      <div class="two-col">
+        <div class="insight-card">
+          <h3>😤 고객 불만 TOP 5</h3>
+          <div id="complaints"></div>
+        </div>
+        <div class="insight-card">
+          <h3>😊 긍정 의견 TOP 5</h3>
+          <div id="positives"></div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="insight-card">
+          <h3>🚨 긴급 이슈</h3>
+          <div id="urgent"></div>
+        </div>
+        <div class="insight-card">
+          <h3>💡 기능 개선 제안</h3>
+          <div id="suggestions"></div>
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <h3>📋 종합 요약</h3>
+        <p id="summary"></p>
+      </div>
+    </div>
+
   </div>
-
-  <div class="result-section" id="result-section">
-    <div class="result-header">
-      <h2>📊 분석 결과</h2>
-      <button class="reset-btn" onclick="resetAll()">↺ 다시 분석</button>
-    </div>
-
-    <div class="metric-grid" id="metrics"></div>
-
-    <div class="two-col">
-      <div class="insight-card">
-        <h3>😤 고객 불만 TOP 5</h3>
-        <div id="complaints"></div>
-      </div>
-      <div class="insight-card">
-        <h3>😊 긍정 의견 TOP 5</h3>
-        <div id="positives"></div>
-      </div>
-    </div>
-
-    <div class="two-col">
-      <div class="insight-card">
-        <h3>🚨 긴급 이슈</h3>
-        <div id="urgent"></div>
-      </div>
-      <div class="insight-card">
-        <h3>💡 기능 개선 제안</h3>
-        <div id="suggestions"></div>
-      </div>
-    </div>
-
-    <div class="summary-card">
-      <h3>📋 종합 요약</h3>
-      <p id="summary"></p>
-    </div>
-  </div>
-
 </div>
 
 <script>
+  /* ── ONBOARDING ── */
+  const onboarding = document.getElementById('onboarding');
+  const obSlides = document.querySelectorAll('.slide');
+  const obDots = document.querySelectorAll('.dot');
+  const btnNext = document.getElementById('btnNext');
+  const btnSkip = document.getElementById('btnSkip');
+  let current = 1;
+  const total = 4;
+
+  function goTo(n) {
+    obSlides.forEach(s => {
+      s.classList.remove('active', 'exit');
+      if (parseInt(s.dataset.index) === current && n !== current) s.classList.add('exit');
+    });
+    current = n;
+    onboarding.dataset.slide = current;
+    obSlides.forEach(s => {
+      if (parseInt(s.dataset.index) === current) s.classList.add('active');
+    });
+    obDots.forEach(d => d.classList.toggle('active', parseInt(d.dataset.i) === current));
+    btnNext.textContent = current === total ? '분석 시작하기' : '다음';
+    btnSkip.style.visibility = current === total ? 'hidden' : 'visible';
+  }
+
+  btnNext.addEventListener('click', () => {
+    if (current < total) { goTo(current + 1); }
+    else { launchApp(); }
+  });
+
+  btnSkip.addEventListener('click', launchApp);
+
+  function launchApp() {
+    onboarding.style.opacity = '0';
+    onboarding.style.transition = 'opacity 0.3s';
+    setTimeout(() => {
+      onboarding.style.display = 'none';
+      document.body.style.overflow = 'auto';
+      document.getElementById('main-app').classList.add('visible');
+    }, 300);
+  }
+
+  goTo(1);
+
+  /* ── MAIN APP ── */
   const dropZone = document.getElementById('drop-zone');
   const fileInput = document.getElementById('file-input');
   const analyzeBtn = document.getElementById('analyze-btn');
@@ -231,14 +836,14 @@
         body: JSON.stringify({ csvContent })
       });
       const result = await res.json();
-clearInterval(msgInterval);
-clearInterval(progInterval);
-document.getElementById('progress-bar').style.width = '100%';
-if (result.error) {
-  document.getElementById('loading-msg').textContent = '오류: ' + result.error;
-  return;
-}
-setTimeout(() => renderResult(result), 400);
+      clearInterval(msgInterval);
+      clearInterval(progInterval);
+      document.getElementById('progress-bar').style.width = '100%';
+      if (result.error) {
+        document.getElementById('loading-msg').textContent = '오류: ' + result.error;
+        return;
+      }
+      setTimeout(() => renderResult(result), 400);
     } catch(e) {
       clearInterval(msgInterval);
       clearInterval(progInterval);
